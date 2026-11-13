@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Comal de Domingo - Pedidos de Quesadillas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf7f2;
+        }
+        /* Animaciones suaves */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        /* Ocultar scrollbar en contenedores horizontales si los hay */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="text-stone-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Notificación Toast Flotante -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Encabezado y Banner de Horario -->
+    <header class="bg-amber-600 text-white shadow-md sticky top-0 z-30">
+        <!-- Barra superior de horario obligatorio -->
+        <div class="bg-stone-900 text-amber-400 text-xs sm:text-sm py-2 px-4 text-center font-semibold tracking-wide flex items-center justify-center gap-2">
+            <i class="fa-regular fa-clock text-amber-400"></i>
+            <span>HORARIO DE ATENCIÓN: Abierto solo los Domingos de 9:00 AM a 6:00 PM</span>
+        </div>
+        
+        <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-amber-600 w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shadow-inner text-xl sm:text-2xl">
+                    <i class="fa-solid fa-fire-burner"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight leading-none">El Comal de Domingo</h1>
+                    <p class="text-amber-100 text-xs sm:text-sm mt-0.5">Quesadillas hechas al momento</p>
+                </div>
+            </div>
+
+            <!-- Botón de Carrito en Header -->
+            <button onclick="toggleCartModal(true)" class="relative bg-stone-900 hover:bg-stone-800 active:scale-95 transition text-white px-4 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-md">
+                <i class="fa-solid fa-bag-shopping text-amber-400"></i>
+                <span class="hidden sm:inline">Mi Pedido</span>
+                <span id="header-cart-count" class="bg-amber-500 text-stone-950 text-xs font-extrabold px-2 py-0.5 rounded-full">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-6 sm:py-8">
+        
+        <!-- Aviso de Modalidad (Solo Quesadillas y Solo Efectivo) -->
+        <div class="bg-white border border-amber-200 rounded-2xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-100 text-amber-700 p-2.5 rounded-xl">
+                    <i class="fa-solid fa-utensils text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-stone-900 text-base sm:text-lg">Arma tus Quesadillas a tu gusto</h2>
+                    <p class="text-stone-500 text-xs sm:text-sm">Elige tu guisado favorito y agrégale los ingredientes extras que desees.</p>
+                </div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 self-stretch sm:self-auto justify-center">
+                <i class="fa-solid fa-money-bill-wave text-emerald-600"></i>
+                <span>Pago 100% en Efectivo (Sin tarjeta)</span>
+            </div>
+        </div>
+
+        <!-- Título del Menú -->
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-extrabold text-stone-900 flex items-center gap-2">
+                <span>Menú de Quesadillas</span>
+                <span id="menu-count-badge" class="text-xs font-semibold bg-stone-200 text-stone-700 px-2.5 py-0.5 rounded-full"></span>
+            </h3>
+        </div>
+
+        <!-- Grid de Quesadillas -->
+        <div id="quesadillas-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Las tarjetas se renderizan dinámicamente con JS -->
+        </div>
+
+    </main>
+
+    <!-- Barra flotante inferior para móviles cuando hay productos en el carrito -->
+    <div id="mobile-cart-bar" class="fixed bottom-4 left-4 right-4 z-30 sm:hidden hidden">
+        <button onclick="toggleCartModal(true)" class="w-full bg-stone-900 text-white py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between font-bold border border-stone-700 active:scale-98 transition">
+            <div class="flex items-center gap-2.5">
+                <span id="mobile-bar-count" class="bg-amber-500 text-stone-950 text-xs font-extrabold px-2.5 py-1 rounded-lg">0</span>
+                <span>Ver mi pedido</span>
+            </div>
+            <span id="mobile-bar-total" class="text-amber-400 text-lg">$0.00</span>
+        </button>
+    </div>
+
+    <!-- Pie de Página con Acceso Discreto para el Dueño -->
+    <footer class="bg-stone-900 text-stone-400 py-8 px-4 mt-12">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+            <div class="text-center sm:text-left">
+                <p class="text-white font-bold text-base">El Comal de Domingo</p>
+                <p class="text-xs mt-1">Atención exclusiva: Domingos de 9:00 AM a 6:00 PM • Solo pago en efectivo.</p>
+            </div>
+            
+            <!-- Botón discreto solo para el dueño -->
+            <button onclick="openOwnerAuthModal()" class="text-stone-500 hover:text-amber-400 transition flex items-center gap-1.5 text-xs py-2 px-3 rounded-lg hover:bg-stone-800" title="Panel de administración del dueño">
+                <i class="fa-solid fa-lock"></i>
+                <span>Acceso Dueño</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 1: PERSONALIZAR QUESADILLA (AGREGAR INGREDIENTES EXTRAS)        -->
+    <!-- ===================================================================== -->
+    <div id="customize-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+            <!-- Cabecera Modal -->
+            <div class="p-5 bg-amber-50 border-b border-amber-100 flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Personaliza tu orden</span>
+                    <h3 id="custom-q-name" class="text-xl font-extrabold text-stone-900 mt-0.5">Nombre Quesadilla</h3>
+                    <p id="custom-q-base" class="text-xs text-stone-600 mt-1">Ingredientes base...</p>
+                </div>
+                <button onclick="closeCustomizeModal()" class="bg-white text-stone-500 hover:text-stone-800 w-9 h-9 rounded-full flex items-center justify-center shadow-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Lista de Extras -->
+            <div class="p-5 overflow-y-auto flex-grow space-y-4">
+                <!-- Selector de Preparación: Al Comal vs En Aceite -->
+                <div>
+                    <h4 class="font-bold text-stone-800 text-sm mb-2 flex items-center justify-between">
+                        <span>¿Cómo la prefieres preparada? *</span>
+                        <span class="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">Elige una opción</span>
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer select-none">
+                            <input type="radio" name="prep-style" value="Al Comal" checked class="peer sr-only">
+                            <div class="p-3 rounded-2xl border-2 border-stone-200 peer-checked:border-amber-600 peer-checked:bg-amber-50/80 hover:bg-stone-50 transition flex flex-col items-center text-center gap-1">
+                                <div class="w-9 h-9 rounded-full bg-stone-100 peer-checked:bg-amber-600 text-stone-700 flex items-center justify-center text-base">
+                                    <i class="fa-solid fa-fire-burner text-amber-600"></i>
+                                </div>
+                                <span class="font-extrabold text-stone-900 text-sm">Al Comal</span>
+                                <span class="text-[11px] text-stone-500 leading-tight">Sin aceite, a la plancha</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer select-none">
+                            <input type="radio" name="prep-style" value="En Aceite" class="peer sr-only">
+                            <div class="p-3 rounded-2xl border-2 border-stone-200 peer-checked:border-amber-600 peer-checked:bg-amber-50/80 hover:bg-stone-50 transition flex flex-col items-center text-center gap-1">
+                                <div class="w-9 h-9 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center text-base">
+                                    <i class="fa-solid fa-fire-flame-curved text-orange-600"></i>
+                                </div>
+                                <span class="font-extrabold text-stone-900 text-sm">En Aceite</span>
+                                <span class="text-[11px] text-stone-500 leading-tight">Frita y doradita</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-stone-800 text-sm mb-2 flex items-center justify-between">
+                        <span>¿Deseas agregar ingredientes extras?</span>
+                        <span class="text-xs font-normal text-stone-500">Opcional</span>
+                    </h4>
+                    <div id="custom-extras-list" class="space-y-2">
+                        <!-- Checkboxes de extras generados por JS -->
+                    </div>
+                </div>
+
+                <!-- Cantidad de esta quesadilla personalizada -->
+                <div class="pt-3 border-t border-stone-100 flex items-center justify-between">
+                    <span class="font-bold text-stone-800 text-sm">Cantidad de quesadillas iguales:</span>
+                    <div class="flex items-center gap-3 bg-stone-100 p-1 rounded-xl">
+                        <button onclick="changeCustomQty(-1)" class="w-8 h-8 rounded-lg bg-white text-stone-800 font-bold shadow-xs hover:bg-stone-50">-</button>
+                        <span id="custom-qty" class="font-extrabold text-stone-900 w-6 text-center">1</span>
+                        <button onclick="changeCustomQty(1)" class="w-8 h-8 rounded-lg bg-white text-stone-800 font-bold shadow-xs hover:bg-stone-50">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pie Modal Agregar al Carrito -->
+            <div class="p-4 bg-stone-50 border-t border-stone-200 flex items-center justify-between gap-4">
+                <div>
+                    <p class="text-xs text-stone-500">Total por esta selección</p>
+                    <p id="custom-total-price" class="text-xl font-extrabold text-stone-900">$0.00</p>
+                </div>
+                <button onclick="addCustomItemToCart()" class="bg-amber-600 hover:bg-amber-700 active:scale-95 transition text-white font-bold px-6 py-3 rounded-xl shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Agregar al Pedido</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: CARRITO DE COMPRAS, UBICACIÓN Y PAGO EN EFECTIVO             -->
+    <!-- ===================================================================== -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 hidden items-center justify-center p-2 sm:p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full max-h-[94vh] flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+            <!-- Cabecera -->
+            <div class="p-5 bg-stone-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-bag-shopping text-amber-400 text-xl"></i>
+                    <h3 class="text-lg font-extrabold">Tu Pedido de Quesadillas</h3>
+                </div>
+                <button onclick="toggleCartModal(false)" class="bg-stone-800 hover:bg-stone-700 text-stone-300 w-9 h-9 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Contenido Scrolleable -->
+            <div class="p-5 overflow-y-auto flex-grow space-y-6">
+                
+                <!-- Lista de productos en el carrito -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3">Detalle de tus quesadillas</h4>
+                    <div id="cart-items-container" class="space-y-3">
+                        <!-- Items renderizados por JS -->
+                    </div>
+                </div>
+
+                <!-- Formulario de Entrega y Pago (visible solo si hay items) -->
+                <div id="checkout-form-section" class="space-y-4 pt-4 border-t border-stone-200 hidden">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400">Datos de Entrega</h4>
+                    
+                    <!-- Nombre del Cliente -->
+                    <div>
+                        <label class="block text-sm font-bold text-stone-700 mb-1">Tu Nombre *</label>
+                        <input type="text" id="customer-name" placeholder="Ej. Carlos Hernández" class="w-full px-4 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                    </div>
+
+                    <!-- Ubicación del Cliente -->
+                    <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-sm font-bold text-stone-800">Ubicación de Entrega *</label>
+                            <button type="button" id="btn-get-location" onclick="getCustomerLocation()" class="bg-amber-600 hover:bg-amber-700 active:scale-95 transition text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
+                                <i class="fa-solid fa-location-crosshairs"></i>
+                                <span>Agregar mi ubicación</span>
+                            </button>
+                        </div>
+                        
+                        <p id="location-status" class="text-xs text-stone-500 hidden"></p>
+                        
+                        <input type="text" id="customer-address" placeholder="Escribe tu calle, número y colonia o usa el botón de ubicación" class="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+                        <input type="hidden" id="customer-coords" value="">
+                    </div>
+
+                    <!-- Método de Pago: EXCLUSIVO EFECTIVO -->
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 space-y-3">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-emerald-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-money-bill-1-wave"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-extrabold text-emerald-950 text-sm">Método de Pago: Solo Efectivo</h5>
+                                <p class="text-xs text-emerald-800 mt-0.5">Por el momento <strong>no aceptamos pagos con tarjeta</strong> ni transferencias. El pago se realiza en efectivo al recibir tus quesadillas.</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-emerald-200/70">
+                            <label class="block text-xs font-bold text-emerald-900 mb-1">¿Con cuánto vas a pagar? (Opcional, para llevar cambio)</label>
+                            <div class="flex items-center gap-3">
+                                <div class="relative flex-grow">
+                                    <span class="absolute left-3.5 top-2.5 text-stone-500 font-bold text-sm">$</span>
+                                    <input type="number" id="cash-payment-input" oninput="calculateChange()" placeholder="Ej. 200" class="w-full pl-8 pr-4 py-2 rounded-xl border border-emerald-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                                </div>
+                                <div id="change-display" class="text-xs font-bold text-emerald-900 bg-white px-3 py-2 rounded-xl border border-emerald-200 shrink-0">
+                                    Cambio: $0.00
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen y Botón Confirmar -->
+            <div id="cart-footer" class="p-4 bg-stone-50 border-t border-stone-200 hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-stone-600 font-semibold text-sm">Total a pagar en efectivo:</span>
+                    <span id="cart-total-amount" class="text-2xl font-extrabold text-stone-900">$0.00</span>
+                </div>
+                <button onclick="confirmOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-98 transition text-white font-extrabold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 text-base">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span>Confirmar Pedido</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: RESUMEN DE PEDIDO CONFIRMADO                                 -->
+    <!-- ===================================================================== -->
+    <div id="order-success-modal" class="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl animate-fade-in">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-stone-900">¡Pedido Confirmado!</h3>
+            <p class="text-sm text-stone-500 mt-1">Recuerda que atendemos los <strong>Domingos de 9:00 AM a 6:00 PM</strong>.</p>
+            
+            <div id="order-receipt-box" class="bg-stone-50 border border-stone-200 rounded-2xl p-4 mt-4 text-left text-xs space-y-2 max-h-60 overflow-y-auto">
+                <!-- Ticket resumen generado por JS -->
+            </div>
+
+            <div class="mt-5 flex flex-col gap-2">
+                <button onclick="copyReceiptToClipboard()" class="w-full bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 transition">
+                    <i class="fa-regular fa-copy"></i>
+                    <span>Copiar Resumen del Pedido</span>
+                </button>
+                <button onclick="closeSuccessModal()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl text-sm transition">
+                    Hacer otro pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 4: AUTENTICACIÓN DEL DUEÑO (PIN)                                -->
+    <!-- ===================================================================== -->
+    <div id="owner-auth-modal" class="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-stone-900 text-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-stone-700 animate-fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2 text-amber-400 font-bold">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Acceso Exclusivo Dueño</span>
+                </div>
+                <button onclick="closeOwnerAuthModal()" class="text-stone-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-stone-400 mb-4">Ingresa tu PIN de administrador para modificar precios e ingredientes.</p>
+            
+            <input type="password" id="owner-pin-input" maxlength="6" placeholder="PIN (Por defecto: 1234)" class="w-full bg-stone-800 border border-stone-600 rounded-xl px-4 py-3 text-center text-lg tracking-widest font-bold text-white focus:outline-none focus:border-amber-500 mb-2" onkeyup="if(event.key === 'Enter') verifyOwnerPin()">
+            <p id="pin-error-msg" class="text-red-400 text-xs text-center mb-3 hidden">PIN incorrecto. Intenta con 1234.</p>
+            
+            <button onclick="verifyOwnerPin()" class="w-full bg-amber-500 hover:bg-amber-600 text-stone-950 font-extrabold py-3 rounded-xl transition">
+                Entrar al Panel
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 5: PANEL DE ADMINISTRACIÓN DEL DUEÑO                            -->
+    <!-- ===================================================================== -->
+    <div id="owner-panel-modal" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 hidden items-center justify-center p-2 sm:p-4">
+        <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+            <!-- Cabecera Admin -->
+            <div class="p-4 sm:p-5 bg-stone-900 text-white flex items-center justify-between">
+                <div>
+                    <span class="bg-amber-500 text-stone-950 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md">Modo Administrador</span>
+                    <h3 class="text-lg sm:text-xl font-extrabold mt-1">Gestión de Menú, Precios e Ingredientes</h3>
+                </div>
+                <button onclick="closeOwnerPanel()" class="bg-stone-800 hover:bg-stone-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Listo</span>
+                </button>
+            </div>
+
+            <!-- Pestañas Admin -->
+            <div class="flex border-b border-stone-200 bg-stone-50 px-4 pt-2 gap-2">
+                <button id="tab-btn-quesadillas" onclick="switchAdminTab('quesadillas')" class="px-4 py-2.5 font-bold text-sm rounded-t-xl border-b-2 border-amber-600 text-amber-700 bg-white">
+                    Quesadillas e Ingredientes
+                </button>
+                <button id="tab-btn-extras" onclick="switchAdminTab('extras')" class="px-4 py-2.5 font-bold text-sm rounded-t-xl border-b-2 border-transparent text-stone-500 hover:text-stone-800">
+                    Ingredientes Extras
+                </button>
+                <button id="tab-btn-security" onclick="switchAdminTab('security')" class="px-4 py-2.5 font-bold text-sm rounded-t-xl border-b-2 border-transparent text-stone-500 hover:text-stone-800">
+                    Cambiar PIN
+                </button>
+            </div>
+
+            <!-- Cuerpo Admin Scrolleable -->
+            <div class="p-4 sm:p-6 overflow-y-auto flex-grow space-y-6">
+                
+                <!-- SECCIÓN A: GESTIÓN DE QUESADILLAS -->
+                <div id="admin-tab-quesadillas" class="space-y-6">
+                    <!-- Formulario para agregar nueva quesadilla -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                        <h4 class="font-bold text-stone-900 text-sm mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-plus text-amber-600"></i>
+                            <span>Agregar Nueva Quesadilla al Menú</span>
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                            <div class="sm:col-span-4">
+                                <input type="text" id="new-q-name" placeholder="Nombre (ej. Chicharrón)" class="w-full px-3 py-2 rounded-xl border border-stone-300 text-sm bg-white">
+                            </div>
+                            <div class="sm:col-span-5">
+                                <input type="text" id="new-q-ingredients" placeholder="Ingredientes base (ej. Tortilla, queso, salsa)" class="w-full px-3 py-2 rounded-xl border border-stone-300 text-sm bg-white">
+                            </div>
+                            <div class="sm:col-span-3 flex gap-2">
+                                <input type="number" id="new-q-price" placeholder="Precio $" class="w-full px-3 py-2 rounded-xl border border-stone-300 text-sm bg-white">
+                                <button onclick="adminAddQuesadilla()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-sm shrink-0">
+                                    Añadir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista editable de quesadillas existentes -->
+                    <div class="space-y-3" id="admin-quesadillas-list">
+                        <!-- Renderizado dinámico por JS -->
+                    </div>
+                </div>
+
+                <!-- SECCIÓN B: GESTIÓN DE INGREDIENTES EXTRAS -->
+                <div id="admin-tab-extras" class="space-y-6 hidden">
+                    <!-- Formulario para agregar nuevo extra -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                        <h4 class="font-bold text-stone-900 text-sm mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-plus text-amber-600"></i>
+                            <span>Agregar Nuevo Ingrediente Extra</span>
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                            <div class="sm:col-span-7">
+                                <input type="text" id="new-extra-name" placeholder="Nombre del ingrediente extra (ej. Aguacate)" class="w-full px-3 py-2 rounded-xl border border-stone-300 text-sm bg-white">
+                            </div>
+                            <div class="sm:col-span-5 flex gap-2">
+                                <input type="number" id="new-extra-price" placeholder="Costo extra $" class="w-full px-3 py-2 rounded-xl border border-stone-300 text-sm bg-white">
+                                <button onclick="adminAddExtra()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-sm shrink-0">
+                                    Añadir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista editable de extras -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="admin-extras-list">
+                        <!-- Renderizado dinámico por JS -->
+                    </div>
+                </div>
+
+                <!-- SECCIÓN C: CAMBIAR PIN Y RESTAURAR -->
+                <div id="admin-tab-security" class="space-y-6 hidden">
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-5 max-w-md">
+                        <h4 class="font-bold text-stone-900 text-sm mb-2">Cambiar PIN de Dueño</h4>
+                        <p class="text-xs text-stone-500 mb-3">El PIN actual se guarda en este dispositivo.</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="update-pin-input" maxlength="6" placeholder="Nuevo PIN numérico" class="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-sm">
+                            <button onclick="adminUpdatePin()" class="bg-stone-900 hover:bg-stone-800 text-white font-bold px-4 py-2 rounded-xl text-sm shrink-0">
+                                Guardar PIN
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-5 max-w-md">
+                        <h4 class="font-bold text-red-900 text-sm mb-1">Restaurar Menú Original</h4>
+                        <p class="text-xs text-red-700 mb-3">Si deseas volver a los precios e ingredientes iniciales por defecto.</p>
+                        <button onclick="adminResetDefaults()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs">
+                            Restaurar Valores de Fábrica
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- LÓGICA JAVASCRIPT DE LA APLICACIÓN                                    -->
+    <!-- ===================================================================== -->
+    <script>
+        // --- DATOS INICIALES POR DEFECTO ---
+        const DEFAULT_QUESADILLAS = [
+            {
+                id: 'q1',
+                name: 'Quesadilla de Queso',
+                ingredients: 'Tortilla de maíz recién hecha, abundante queso Oaxaca fundido.',
+                price: 30,
+                soldOut: false
+            },
+            {
+                id: 'q2',
+                name: 'Chicharrón Prensado',
+                ingredients: 'Tortilla de maíz, chicharrón prensado guisado en salsa roja suave y queso Oaxaca.',
+                price: 38,
+                soldOut: false
+            },
+            {
+                id: 'q3',
+                name: 'Tinga de Pollo',
+                ingredients: 'Tortilla de maíz, pechuga de pollo deshebrada en salsa de jitomate y chipotle, queso Oaxaca.',
+                price: 38,
+                soldOut: false
+            },
+            {
+                id: 'q4',
+                name: 'Flor de Calabaza',
+                ingredients: 'Tortilla de maíz, flor de calabaza fresca salteada con epazote, elote y queso Oaxaca.',
+                price: 36,
+                soldOut: false
+            },
+            {
+                id: 'q5',
+                name: 'Huitlacoche',
+                ingredients: 'Tortilla de maíz, huitlacoche guisado con cebolla, ajo, epazote y queso Oaxaca.',
+                price: 40,
+                soldOut: false
+            },
+            {
+                id: 'q6',
+                name: 'Champiñones al Ajillo',
+                ingredients: 'Tortilla de maíz, champiñones frescos laminados con epazote y queso Oaxaca.',
+                price: 36,
+                soldOut: false
+            },
+            {
+                id: 'q7',
+                name: 'Papa con Chorizo',
+                ingredients: 'Tortilla de maíz, papa suave dorada con chorizo ranchero y queso Oaxaca.',
+                price: 38,
+                soldOut: false
+            }
+        ];
+
+        const DEFAULT_EXTRAS = [
+            { id: 'e1', name: 'Queso Oaxaca Extra', price: 10, soldOut: false },
+            { id: 'e2', name: 'Aguacate en rebanadas', price: 12, soldOut: false },
+            { id: 'e3', name: 'Crema ácida', price: 5, soldOut: false },
+            { id: 'e4', name: 'Salsa Verde (Para llevar)', price: 0, soldOut: false },
+            { id: 'e5', name: 'Salsa Roja Picante (Para llevar)', price: 0, soldOut: false },
+            { id: 'e6', name: 'Cebolla y Cilantro picados', price: 3, soldOut: false },
+            { id: 'e7', name: 'Nopales preparados', price: 8, soldOut: false }
+        ];
+
+        // --- ESTADO DE LA APLICACIÓN ---
+        let quesadillas = [];
+        let extras = [];
+        let ownerPin = '1234';
+        let cart = [];
+        
+        // Estado temporal del modal de personalización
+        let currentCustomQuesadilla = null;
+        let currentCustomQty = 1;
+        let lastReceiptText = '';
+
+        // --- INICIALIZACIÓN ---
+        window.onload = function() {
+            loadDataFromStorage();
+            renderMenu();
+            updateCartUI();
+        };
+
+        function loadDataFromStorage() {
+            try {
+                const savedQ = localStorage.getItem('comal_quesadillas_v1');
+                const savedE = localStorage.getItem('comal_extras_v1');
+                const savedPin = localStorage.getItem('comal_owner_pin_v1');
+
+                quesadillas = savedQ ? JSON.parse(savedQ) : JSON.parse(JSON.stringify(DEFAULT_QUESADILLAS));
+                extras = savedE ? JSON.parse(savedE) : JSON.parse(JSON.stringify(DEFAULT_EXTRAS));
+                ownerPin = savedPin ? savedPin : '1234';
+            } catch (err) {
+                console.error("Error cargando localStorage:", err);
+                quesadillas = JSON.parse(JSON.stringify(DEFAULT_QUESADILLAS));
+                extras = JSON.parse(JSON.stringify(DEFAULT_EXTRAS));
+            }
+        }
+
+        function saveDataToStorage() {
+            localStorage.setItem('comal_quesadillas_v1', JSON.stringify(quesadillas));
+            localStorage.setItem('comal_extras_v1', JSON.stringify(extras));
+            localStorage.setItem('comal_owner_pin_v1', ownerPin);
+        }
+
+        // --- NOTIFICACIONES TOAST ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-red-600' : (type === 'info' ? 'bg-stone-800' : 'bg-emerald-600');
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2 animate-fade-in`;
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- RENDERIZADO DEL MENÚ PARA CLIENTES ---
+        function renderMenu() {
+            const grid = document.getElementById('quesadillas-grid');
+            const badge = document.getElementById('menu-count-badge');
+            const availableCount = quesadillas.filter(q => !q.soldOut).length;
+            badge.textContent = `${availableCount} disponibles`;
+
+            grid.innerHTML = '';
+
+            quesadillas.forEach(q => {
+                const isSoldOut = Boolean(q.soldOut);
+                const card = document.createElement('div');
+                card.className = isSoldOut
+                    ? 'bg-stone-100/80 rounded-2xl border border-stone-200 p-5 shadow-2xs flex flex-col justify-between opacity-75 relative overflow-hidden'
+                    : 'bg-white rounded-2xl border border-stone-200/90 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between';
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start gap-2 mb-2">
+                            <h4 class="font-extrabold text-lg ${isSoldOut ? 'text-stone-500 line-through' : 'text-stone-900'} leading-snug">${escapeHtml(q.name)}</h4>
+                            ${isSoldOut 
+                                ? `<span class="bg-red-100 text-red-700 border border-red-200 font-extrabold px-2.5 py-1 rounded-xl text-xs uppercase tracking-wide shrink-0">Agotado</span>`
+                                : `<span class="bg-amber-100 text-amber-900 font-extrabold px-3 py-1 rounded-xl text-base shrink-0">$${Number(q.price).toFixed(2)}</span>`
+                            }
+                        </div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1">Ingredientes incluidos:</p>
+                        <p class="text-stone-600 text-sm leading-relaxed mb-4">
+                            ${escapeHtml(q.ingredients)}
+                        </p>
+                    </div>
+                    
+                    ${isSoldOut
+                        ? `<button disabled class="w-full bg-stone-200 text-stone-500 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm cursor-not-allowed">
+                               <i class="fa-solid fa-ban"></i>
+                               <span>Guiso Agotado por Hoy</span>
+                           </button>`
+                        : `<button onclick="openCustomizeModal('${q.id}')" class="w-full bg-stone-900 hover:bg-amber-600 active:scale-98 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-xs">
+                               <i class="fa-solid fa-plus"></i>
+                               <span>Elegir y Agregar Extras</span>
+                           </button>`
+                    }
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- PERSONALIZACIÓN DE QUESADILLA (EXTRAS) ---
+        function openCustomizeModal(quesadillaId) {
+            const q = quesadillas.find(item => item.id === quesadillaId);
+            if (!q || q.soldOut) return;
+
+            currentCustomQuesadilla = q;
+            currentCustomQty = 1;
+
+            document.getElementById('custom-q-name').textContent = q.name;
+            document.getElementById('custom-q-base').textContent = `Incluye: ${q.ingredients}`;
+            document.getElementById('custom-qty').textContent = currentCustomQty;
+
+            // Reiniciar selección de preparación a "Al Comal" por defecto
+            const defaultPrep = document.querySelector('input[name="prep-style"][value="Al Comal"]');
+            if (defaultPrep) defaultPrep.checked = true;
+
+            const extrasContainer = document.getElementById('custom-extras-list');
+            extrasContainer.innerHTML = '';
+
+            if (extras.length === 0) {
+                extrasContainer.innerHTML = '<p class="text-xs text-stone-400 italic">No hay ingredientes extras configurados.</p>';
+            } else {
+                extras.forEach(ext => {
+                    const isExtraSoldOut = Boolean(ext.soldOut);
+                    const priceText = isExtraSoldOut
+                        ? 'Agotado'
+                        : (Number(ext.price) === 0 ? 'Gratis' : `+$${Number(ext.price).toFixed(2)}`);
+                    
+                    const label = document.createElement('label');
+                    label.className = isExtraSoldOut
+                        ? 'flex items-center justify-between p-3 rounded-xl border border-stone-200 bg-stone-100 opacity-60 cursor-not-allowed select-none'
+                        : 'flex items-center justify-between p-3 rounded-xl border border-stone-200 hover:bg-amber-50/50 cursor-pointer transition select-none';
+                    
+                    label.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" value="${ext.id}" ${isExtraSoldOut ? 'disabled' : 'onchange="updateCustomTotal()"'} class="extra-checkbox w-5 h-5 accent-amber-600 rounded-md ${isExtraSoldOut ? 'cursor-not-allowed' : 'cursor-pointer'}">
+                            <span class="text-sm font-semibold ${isExtraSoldOut ? 'text-stone-400 line-through' : 'text-stone-800'}">${escapeHtml(ext.name)}</span>
+                        </div>
+                        <span class="text-xs font-bold ${isExtraSoldOut ? 'text-red-600 bg-red-50 border border-red-200' : (Number(ext.price) === 0 ? 'text-emerald-600 bg-stone-100' : 'text-stone-600 bg-stone-100')} px-2.5 py-1 rounded-lg">
+                            ${priceText}
+                        </span>
+                    `;
+                    extrasContainer.appendChild(label);
+                });
+            }
+
+            updateCustomTotal();
+            const modal = document.getElementById('customize-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCustomizeModal() {
+            const modal = document.getElementById('customize-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentCustomQuesadilla = null;
+        }
+
+        function changeCustomQty(delta) {
+            currentCustomQty = Math.max(1, currentCustomQty + delta);
+            document.getElementById('custom-qty').textContent = currentCustomQty;
+            updateCustomTotal();
+        }
+
+        function updateCustomTotal() {
+            if (!currentCustomQuesadilla) return;
+            let unitPrice = Number(currentCustomQuesadilla.price);
+            
+            const checkboxes = document.querySelectorAll('.extra-checkbox:checked');
+            checkboxes.forEach(cb => {
+                const ext = extras.find(e => e.id === cb.value);
+                if (ext) unitPrice += Number(ext.price);
+            });
+
+            const total = unitPrice * currentCustomQty;
+            document.getElementById('custom-total-price').textContent = `$${total.toFixed(2)}`;
+        }
+
+        function addCustomItemToCart() {
+            if (!currentCustomQuesadilla) return;
+
+            const selectedExtras = [];
+            let extrasCost = 0;
+
+            const prepRadio = document.querySelector('input[name="prep-style"]:checked');
+            const preparation = prepRadio ? prepRadio.value : 'Al Comal';
+
+            document.querySelectorAll('.extra-checkbox:checked').forEach(cb => {
+                const ext = extras.find(e => e.id === cb.value);
+                if (ext) {
+                    selectedExtras.push({ id: ext.id, name: ext.name, price: Number(ext.price) });
+                    extrasCost += Number(ext.price);
+                }
+            });
+
+            const unitTotal = Number(currentCustomQuesadilla.price) + extrasCost;
+
+            cart.push({
+                cartId: 'item_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                quesadillaId: currentCustomQuesadilla.id,
+                name: currentCustomQuesadilla.name,
+                preparation: preparation,
+                basePrice: Number(currentCustomQuesadilla.price),
+                extras: selectedExtras,
+                unitPrice: unitTotal,
+                qty: currentCustomQty
+            });
+
+            updateCartUI();
+            closeCustomizeModal();
+            showToast(`Agregaste ${currentCustomQty} ${currentCustomQuesadilla.name} (${preparation})`);
+        }
+
+        // --- CARRITO DE COMPRAS ---
+        function toggleCartModal(show) {
+            const modal = document.getElementById('cart-modal');
+            if (show) {
+                renderCartItems();
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function updateCartUI() {
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            const totalCost = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
+
+            document.getElementById('header-cart-count').textContent = totalItems;
+            
+            const mobileBar = document.getElementById('mobile-cart-bar');
+            if (totalItems > 0) {
+                mobileBar.classList.remove('hidden');
+                document.getElementById('mobile-bar-count').textContent = totalItems;
+                document.getElementById('mobile-bar-total').textContent = `$${totalCost.toFixed(2)}`;
+            } else {
+                mobileBar.classList.add('hidden');
+            }
+
+            document.getElementById('cart-total-amount').textContent = `$${totalCost.toFixed(2)}`;
+            calculateChange();
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById('cart-items-container');
+            const formSection = document.getElementById('checkout-form-section');
+            const footerSection = document.getElementById('cart-footer');
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 bg-stone-50 rounded-2xl border border-dashed border-stone-300">
+                        <i class="fa-solid fa-basket-shopping text-3xl text-stone-300 mb-2"></i>
+                        <p class="text-stone-500 font-semibold text-sm">Aún no has agregado quesadillas</p>
+                        <button onclick="toggleCartModal(false)" class="mt-3 text-amber-600 font-bold text-xs hover:underline">Ver menú de quesadillas</button>
+                    </div>
+                `;
+                formSection.classList.add('hidden');
+                footerSection.classList.add('hidden');
+                return;
+            }
+
+            formSection.classList.remove('hidden');
+            footerSection.classList.remove('hidden');
+            container.innerHTML = '';
+
+            cart.forEach((item, index) => {
+                const prepStyle = item.preparation || 'Al Comal';
+                const prepBadgeClass = prepStyle === 'En Aceite'
+                    ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                    : 'bg-stone-200 text-stone-800 border border-stone-300';
+
+                const extrasHtml = item.extras.length > 0
+                    ? `<p class="text-xs text-amber-700 font-medium mt-1">+ Extras: ${item.extras.map(e => `${escapeHtml(e.name)} ($${e.price})`).join(', ')}</p>`
+                    : `<p class="text-xs text-stone-400 mt-1">Sin ingredientes extras</p>`;
+
+                const div = document.createElement('div');
+                div.className = 'bg-stone-50 border border-stone-200 rounded-2xl p-3.5 flex items-center justify-between gap-3';
+                div.innerHTML = `
+                    <div class="flex-grow">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="bg-stone-800 text-white text-xs font-bold px-2 py-0.5 rounded-md">${item.qty}x</span>
+                            <h5 class="font-bold text-stone-900 text-sm">${escapeHtml(item.name)}</h5>
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${prepBadgeClass}">
+                                ${escapeHtml(prepStyle)}
+                            </span>
+                        </div>
+                        ${extrasHtml}
+                        <p class="text-xs font-extrabold text-stone-700 mt-1.5">$${(item.unitPrice * item.qty).toFixed(2)}</p>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="updateCartItemQty(${index}, -1)" class="w-7 h-7 rounded-lg bg-white border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-100">-</button>
+                        <button onclick="updateCartItemQty(${index}, 1)" class="w-7 h-7 rounded-lg bg-white border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-100">+</button>
+                        <button onclick="removeCartItem(${index})" class="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center ml-1" title="Eliminar">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            updateCartUI();
+        }
+
+        function updateCartItemQty(index, delta) {
+            if (!cart[index]) return;
+            cart[index].qty += delta;
+            if (cart[index].qty <= 0) {
+                cart.splice(index, 1);
+            }
+            renderCartItems();
+            updateCartUI();
+        }
+
+        function removeCartItem(index) {
+            cart.splice(index, 1);
+            renderCartItems();
+            updateCartUI();
+        }
+
+        // --- GEOLOCALIZACIÓN DEL CLIENTE ---
+        function getCustomerLocation() {
+            const statusEl = document.getElementById('location-status');
+            const addressInput = document.getElementById('customer-address');
+            const coordsInput = document.getElementById('customer-coords');
+            const btn = document.getElementById('btn-get-location');
+
+            if (!navigator.geolocation) {
+                statusEl.textContent = "Tu navegador no soporta ubicación automática. Por favor escríbela abajo.";
+                statusEl.className = "text-xs text-red-600 font-medium block";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Buscando...</span>';
+            statusEl.textContent = "Obteniendo tu ubicación GPS...";
+            statusEl.className = "text-xs text-amber-700 font-medium block";
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lng = position.coords.longitude.toFixed(6);
+                    const mapsLink = `https://maps.google.com/?q=${lat},${lng}`;
+                    
+                    coordsInput.value = mapsLink;
+                    if (!addressInput.value.trim()) {
+                        addressInput.value = `Ubicación GPS capturada (${lat}, ${lng})`;
+                    }
+                    
+                    statusEl.innerHTML = `<i class="fa-solid fa-check-circle text-emerald-600"></i> ¡Ubicación GPS capturada! Puedes agregar referencias extra abajo.`;
+                    statusEl.className = "text-xs text-emerald-700 font-semibold block";
+                    
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i><span>Ubicación lista</span>';
+                    showToast("Ubicación capturada correctamente");
+                },
+                (error) => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>Agregar mi ubicación</span>';
+                    statusEl.textContent = "No se pudo obtener el GPS (permiso denegado o sin señal). Escribe tu dirección manualmente.";
+                    statusEl.className = "text-xs text-red-600 font-medium block";
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        // --- CÁLCULO DE CAMBIO EN EFECTIVO ---
+        function calculateChange() {
+            const totalCost = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
+            const cashGiven = parseFloat(document.getElementById('cash-payment-input').value);
+            const display = document.getElementById('change-display');
+
+            if (isNaN(cashGiven) || cashGiven <= 0) {
+                display.textContent = "Cambio: $0.00";
+                display.className = "text-xs font-bold text-emerald-900 bg-white px-3 py-2 rounded-xl border border-emerald-200 shrink-0";
+                return;
+            }
+
+            if (cashGiven < totalCost) {
+                display.textContent = `Faltan: $${(totalCost - cashGiven).toFixed(2)}`;
+                display.className = "text-xs font-bold text-red-700 bg-red-50 px-3 py-2 rounded-xl border border-red-200 shrink-0";
+            } else {
+                display.textContent = `Cambio: $${(cashGiven - totalCost).toFixed(2)}`;
+                display.className = "text-xs font-bold text-emerald-900 bg-white px-3 py-2 rounded-xl border border-emerald-200 shrink-0";
+            }
+        }
+
+        // --- CONFIRMAR PEDIDO ---
+        function confirmOrder() {
+            const name = document.getElementById('customer-name').value.trim();
+            const address = document.getElementById('customer-address').value.trim();
+            const coords = document.getElementById('customer-coords').value.trim();
+            const cashGiven = parseFloat(document.getElementById('cash-payment-input').value);
+
+            if (!name) {
+                showToast("Por favor escribe tu nombre", "error");
+                document.getElementById('customer-name').focus();
+                return;
+            }
+            if (!address && !coords) {
+                showToast("Por favor agrega tu ubicación o escribe tu dirección", "error");
+                document.getElementById('customer-address').focus();
+                return;
+            }
+
+            const totalCost = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
+            
+            if (!isNaN(cashGiven) && cashGiven > 0 && cashGiven < totalCost) {
+                showToast("El monto en efectivo es menor al total del pedido", "error");
+                return;
+            }
+
+            // Construir resumen del pedido
+            let itemsHtml = '';
+            let itemsPlain = '';
+            cart.forEach(item => {
+                const prepStyle = item.preparation || 'Al Comal';
+                const extrasStr = item.extras.length > 0 ? ` (+ ${item.extras.map(e => e.name).join(', ')})` : '';
+                itemsHtml += `<div class="flex justify-between gap-2"><span><strong>${item.qty}x</strong> ${escapeHtml(item.name)} <em class="text-amber-700 font-semibold">[${escapeHtml(prepStyle)}]</em>${escapeHtml(extrasStr)}</span><span class="shrink-0">$${(item.unitPrice * item.qty).toFixed(2)}</span></div>`;
+                itemsPlain += `- ${item.qty}x ${item.name} [${prepStyle}]${extrasStr}: $${(item.unitPrice * item.qty).toFixed(2)}\n`;
+            });
+
+            const changeInfo = (!isNaN(cashGiven) && cashGiven >= totalCost)
+                ? `Paga con: $${cashGiven.toFixed(2)} | Cambio a llevar: $${(cashGiven - totalCost).toFixed(2)}`
+                : `Pago exacto / Por definir en efectivo`;
+
+            const receiptBox = document.getElementById('order-receipt-box');
+            receiptBox.innerHTML = `
+                <p><strong>Cliente:</strong> ${escapeHtml(name)}</p>
+                <p><strong>Dirección:</strong> ${escapeHtml(address)}</p>
+                ${coords ? `<p><strong>Enlace Mapa:</strong> <a href="${coords}" target="_blank" class="text-amber-600 underline">Ver ubicación GPS</a></p>` : ''}
+                <p><strong>Método de Pago:</strong> SOLO EFECTIVO (${changeInfo})</p>
+                <hr class="border-stone-200 my-2">
+                <div class="space-y-1">${itemsHtml}</div>
+                <hr class="border-stone-200 my-2">
+                <div class="flex justify-between text-sm font-extrabold text-stone-900">
+                    <span>TOTAL A PAGAR:</span>
+                    <span>$${totalCost.toFixed(2)}</span>
+                </div>
+            `;
+
+            lastReceiptText = `*NUEVO PEDIDO - EL COMAL DE DOMINGO*\n` +
+                `Horario: Domingos 9:00 AM - 6:00 PM\n` +
+                `Cliente: ${name}\n` +
+                `Dirección: ${address}\n` +
+                (coords ? `Mapa GPS: ${coords}\n` : '') +
+                `Pago: SOLO EFECTIVO (${changeInfo})\n\n` +
+                `Detalle:\n${itemsPlain}\n` +
+                `TOTAL: $${totalCost.toFixed(2)}`;
+
+            // Limpiar carrito y cerrar modal de carrito
+            cart = [];
+            updateCartUI();
+            toggleCartModal(false);
+
+            // Mostrar modal de éxito
+            const successModal = document.getElementById('order-success-modal');
+            successModal.classList.remove('hidden');
+            successModal.classList.add('flex');
+        }
+
+        function copyReceiptToClipboard() {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = lastReceiptText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast("Resumen copiado al portapapeles");
+        }
+
+        function closeSuccessModal() {
+            const successModal = document.getElementById('order-success-modal');
+            successModal.classList.add('hidden');
+            successModal.classList.remove('flex');
+        }
+
+        // =====================================================================
+        // PANEL DE ADMINISTRACIÓN (SOLO DUEÑO)
+        // =====================================================================
+        function openOwnerAuthModal() {
+            document.getElementById('owner-pin-input').value = '';
+            document.getElementById('pin-error-msg').classList.add('hidden');
+            const modal = document.getElementById('owner-auth-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => document.getElementById('owner-pin-input').focus(), 100);
+        }
+
+        function closeOwnerAuthModal() {
+            const modal = document.getElementById('owner-auth-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function verifyOwnerPin() {
+            const entered = document.getElementById('owner-pin-input').value.trim();
+            if (entered === ownerPin) {
+                closeOwnerAuthModal();
+                openOwnerPanel();
+            } else {
+                document.getElementById('pin-error-msg').classList.remove('hidden');
+            }
+        }
+
+        function openOwnerPanel() {
+            renderAdminLists();
+            const modal = document.getElementById('owner-panel-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeOwnerPanel() {
+            const modal = document.getElementById('owner-panel-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            renderMenu(); // Refrescar menú del cliente por si hubo cambios
+        }
+
+        function switchAdminTab(tabName) {
+            const tabs = ['quesadillas', 'extras', 'security'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const panel = document.getElementById(`admin-tab-${t}`);
+                if (t === tabName) {
+                    btn.className = 'px-4 py-2.5 font-bold text-sm rounded-t-xl border-b-2 border-amber-600 text-amber-700 bg-white';
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.className = 'px-4 py-2.5 font-bold text-sm rounded-t-xl border-b-2 border-transparent text-stone-500 hover:text-stone-800';
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        function renderAdminLists() {
+            // 1. Renderizar lista de Quesadillas editables
+            const qList = document.getElementById('admin-quesadillas-list');
+            qList.innerHTML = '';
+
+            quesadillas.forEach((q, idx) => {
+                const isSoldOut = Boolean(q.soldOut);
+                const row = document.createElement('div');
+                row.className = `border rounded-2xl p-4 shadow-2xs space-y-3 transition ${isSoldOut ? 'bg-red-50/40 border-red-200' : 'bg-white border-stone-200'}`;
+                row.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+                        <span class="text-xs font-extrabold uppercase tracking-wider ${isSoldOut ? 'text-red-600' : 'text-emerald-600'} flex items-center gap-1.5">
+                            <i class="fa-solid ${isSoldOut ? 'fa-circle-xmark' : 'fa-circle-check'}"></i>
+                            <span>${isSoldOut ? 'Estado: AGOTADO (No se puede pedir)' : 'Estado: DISPONIBLE'}</span>
+                        </span>
+                        <button onclick="adminToggleQuesadillaSoldOut(${idx})" class="px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${isSoldOut ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-red-100 hover:bg-red-200 text-red-700'}">
+                            <i class="fa-solid ${isSoldOut ? 'fa-rotate-left' : 'fa-ban'}"></i>
+                            <span>${isSoldOut ? 'Marcar Disponible' : 'Marcar Agotado'}</span>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                        <div class="sm:col-span-4">
+                            <label class="block text-[11px] font-bold text-stone-400 uppercase">Nombre del Guiso</label>
+                            <input type="text" value="${escapeHtml(q.name)}" onchange="adminUpdateQuesadilla(${idx}, 'name', this.value)" class="w-full px-3 py-1.5 rounded-lg border border-stone-300 text-sm font-bold text-stone-900 bg-white">
+                        </div>
+                        <div class="sm:col-span-5">
+                            <label class="block text-[11px] font-bold text-stone-400 uppercase">Ingredientes Base</label>
+                            <input type="text" value="${escapeHtml(q.ingredients)}" onchange="adminUpdateQuesadilla(${idx}, 'ingredients', this.value)" class="w-full px-3 py-1.5 rounded-lg border border-stone-300 text-sm text-stone-700 bg-white">
+                        </div>
+                        <div class="sm:col-span-3 flex items-end gap-2">
+                            <div class="flex-grow">
+                                <label class="block text-[11px] font-bold text-stone-400 uppercase">Precio ($)</label>
+                                <input type="number" value="${q.price}" onchange="adminUpdateQuesadilla(${idx}, 'price', this.value)" class="w-full px-3 py-1.5 rounded-lg border border-stone-300 text-sm font-extrabold text-amber-700 bg-white">
+                            </div>
+                            <button onclick="adminDeleteQuesadilla(${idx})" class="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition" title="Eliminar quesadilla">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                qList.appendChild(row);
+            });
+
+            // 2. Renderizar lista de Extras editables
+            const eList = document.getElementById('admin-extras-list');
+            eList.innerHTML = '';
+
+            extras.forEach((ext, idx) => {
+                const isExtraSoldOut = Boolean(ext.soldOut);
+                const card = document.createElement('div');
+                card.className = `border rounded-2xl p-3.5 space-y-2.5 transition ${isExtraSoldOut ? 'bg-red-50/40 border-red-200' : 'bg-white border-stone-200'}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold ${isExtraSoldOut ? 'text-red-600' : 'text-emerald-600'}">
+                            ${isExtraSoldOut ? 'AGOTADO' : 'DISPONIBLE'}
+                        </span>
+                        <button onclick="adminToggleExtraSoldOut(${idx})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${isExtraSoldOut ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-red-100 text-red-700 hover:bg-red-200'}">
+                            ${isExtraSoldOut ? 'Activar' : 'Poner Agotado'}
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex-grow">
+                            <label class="block text-[10px] font-bold text-stone-400 uppercase">Ingrediente Extra</label>
+                            <input type="text" value="${escapeHtml(ext.name)}" onchange="adminUpdateExtra(${idx}, 'name', this.value)" class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-sm font-semibold bg-white">
+                        </div>
+                        <div class="w-24">
+                            <label class="block text-[10px] font-bold text-stone-400 uppercase">Precio ($)</label>
+                            <input type="number" value="${ext.price}" onchange="adminUpdateExtra(${idx}, 'price', this.value)" class="w-full px-2.5 py-1.5 rounded-lg border border-stone-300 text-sm font-bold text-amber-700 bg-white">
+                        </div>
+                        <button onclick="adminDeleteExtra(${idx})" class="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg mt-4" title="Eliminar extra">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                eList.appendChild(card);
+            });
+        }
+
+        // Acciones CRUD Admin - Quesadillas
+        function adminAddQuesadilla() {
+            const name = document.getElementById('new-q-name').value.trim();
+            const ingredients = document.getElementById('new-q-ingredients').value.trim();
+            const price = parseFloat(document.getElementById('new-q-price').value);
+
+            if (!name || !ingredients || isNaN(price) || price < 0) {
+                showToast("Completa nombre, ingredientes y precio válido", "error");
+                return;
+            }
+
+            quesadillas.push({
+                id: 'q_' + Date.now(),
+                name,
+                ingredients,
+                price,
+                soldOut: false
+            });
+
+            saveDataToStorage();
+            renderAdminLists();
+            renderMenu();
+
+            document.getElementById('new-q-name').value = '';
+            document.getElementById('new-q-ingredients').value = '';
+            document.getElementById('new-q-price').value = '';
+            showToast("Quesadilla agregada al menú");
+        }
+
+        function adminToggleQuesadillaSoldOut(index) {
+            if (!quesadillas[index]) return;
+            quesadillas[index].soldOut = !quesadillas[index].soldOut;
+            saveDataToStorage();
+            renderAdminLists();
+            renderMenu();
+            showToast(quesadillas[index].soldOut ? `"${quesadillas[index].name}" marcado como AGOTADO` : `"${quesadillas[index].name}" disponible nuevamente`, quesadillas[index].soldOut ? 'info' : 'success');
+        }
+
+        function adminUpdateQuesadilla(index, field, value) {
+            if (!quesadillas[index]) return;
+            if (field === 'price') {
+                const num = parseFloat(value);
+                if (isNaN(num) || num < 0) return;
+                quesadillas[index].price = num;
+            } else {
+                if (!value.trim()) return;
+                quesadillas[index][field] = value.trim();
+            }
+            saveDataToStorage();
+            renderMenu();
+            showToast("Cambios guardados");
+        }
+
+        function adminDeleteQuesadilla(index) {
+            quesadillas.splice(index, 1);
+            saveDataToStorage();
+            renderAdminLists();
+            renderMenu();
+            showToast("Quesadilla eliminada", "info");
+        }
+
+        // Acciones CRUD Admin - Extras
+        function adminAddExtra() {
+            const name = document.getElementById('new-extra-name').value.trim();
+            const price = parseFloat(document.getElementById('new-extra-price').value);
+
+            if (!name || isNaN(price) || price < 0) {
+                showToast("Escribe el nombre y costo del extra (0 si es gratis)", "error");
+                return;
+            }
+
+            extras.push({
+                id: 'e_' + Date.now(),
+                name,
+                price,
+                soldOut: false
+            });
+
+            saveDataToStorage();
+            renderAdminLists();
+
+            document.getElementById('new-extra-name').value = '';
+            document.getElementById('new-extra-price').value = '';
+            showToast("Ingrediente extra agregado");
+        }
+
+        function adminToggleExtraSoldOut(index) {
+            if (!extras[index]) return;
+            extras[index].soldOut = !extras[index].soldOut;
+            saveDataToStorage();
+            renderAdminLists();
+            showToast(extras[index].soldOut ? `"${extras[index].name}" marcado como AGOTADO` : `"${extras[index].name}" disponible nuevamente`, extras[index].soldOut ? 'info' : 'success');
+        }
+
+        function adminUpdateExtra(index, field, value) {
+            if (!extras[index]) return;
+            if (field === 'price') {
+                const num = parseFloat(value);
+                if (isNaN(num) || num < 0) return;
+                extras[index].price = num;
+            } else {
+                if (!value.trim()) return;
+                extras[index][field] = value.trim();
+            }
+            saveDataToStorage();
+            showToast("Extra actualizado");
+        }
+
+        function adminDeleteExtra(index) {
+            extras.splice(index, 1);
+            saveDataToStorage();
+            renderAdminLists();
+            showToast("Ingrediente extra eliminado", "info");
+        }
+
+        // Seguridad y Restauración Admin
+        function adminUpdatePin() {
+            const newPin = document.getElementById('update-pin-input').value.trim();
+            if (newPin.length < 4) {
+                showToast("El PIN debe tener al menos 4 caracteres", "error");
+                return;
+            }
+            ownerPin = newPin;
+            saveDataToStorage();
+            document.getElementById('update-pin-input').value = '';
+            showToast("PIN de dueño actualizado correctamente");
+        }
+
+        function adminResetDefaults() {
+            quesadillas = JSON.parse(JSON.stringify(DEFAULT_QUESADILLAS));
+            extras = JSON.parse(JSON.stringify(DEFAULT_EXTRAS));
+            saveDataToStorage();
+            renderAdminLists();
+            renderMenu();
+            showToast("Menú restaurado a valores iniciales");
+        }
+
+        // Utilidad para prevenir XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
